@@ -230,7 +230,7 @@ VOID HideFromKLDR(PVOID Module)
 PDRIVER_OBJECT g_pDriverObject = NULL;
 
 
-NTSTATUS KeReadProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, PVOID SourceAddress, PVOID TargetAddress, SIZE_T Size)//SourceProcess - откуда читаем TargetProcess - куда читаем
+NTSTATUS KeReadProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, PVOID SourceAddress, PVOID TargetAddress, SIZE_T Size)//SourceProcess - РѕС‚РєСѓРґР° С‡РёС‚Р°РµРј TargetProcess - РєСѓРґР° С‡РёС‚Р°РµРј
 {
 	SIZE_T Result;
 
@@ -239,7 +239,7 @@ NTSTATUS KeReadProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, P
 
 }
 
-NTSTATUS KeWriteProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, PVOID SourceAddress, PVOID TargetAddress, SIZE_T Size)//SourceProcess - откуда пишем TargetProcess - куда пишем
+NTSTATUS KeWriteProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, PVOID SourceAddress, PVOID TargetAddress, SIZE_T Size)//SourceProcess - РѕС‚РєСѓРґР° РїРёС€РµРј TargetProcess - РєСѓРґР° РїРёС€РµРј
 {
 	SIZE_T Result;
 
@@ -307,26 +307,26 @@ typedef struct _CommandSpace
 	BYTE Flag;
 	DWORD32 PID;//PID
 	/*
-		0 - ничего не делаем
-		1 - чтение
-		2 - запись
-		3 - получения базового адреса модуля
-		4 - выход из цикла в драйвере
-		5 - передача драйверу PID 
+		0 - РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
+		1 - С‡С‚РµРЅРёРµ
+		2 - Р·Р°РїРёСЃСЊ
+		3 - РїРѕР»СѓС‡РµРЅРёСЏ Р±Р°Р·РѕРІРѕРіРѕ Р°РґСЂРµСЃР° РјРѕРґСѓР»СЏ
+		4 - РІС‹С…РѕРґ РёР· С†РёРєР»Р° РІ РґСЂР°Р№РІРµСЂРµ
+		5 - РїРµСЂРµРґР°С‡Р° РґСЂР°Р№РІРµСЂСѓ PID 
 	*/
-	PVOID Addr1; //при чтении: откуда читаем   при записи: куда пишем
-	PVOID Addr2; //при чтении: куда читаем  при записи: откуда пишем
-	DWORD32 Size;//размер чтения/записи
-	DWORD64 Result;//результат(используется не всегда)
+	PVOID Addr1; //РїСЂРё С‡С‚РµРЅРёРё: РѕС‚РєСѓРґР° С‡РёС‚Р°РµРј   РїСЂРё Р·Р°РїРёСЃРё: РєСѓРґР° РїРёС€РµРј
+	PVOID Addr2; //РїСЂРё С‡С‚РµРЅРёРё: РєСѓРґР° С‡РёС‚Р°РµРј  РїСЂРё Р·Р°РїРёСЃРё: РѕС‚РєСѓРґР° РїРёС€РµРј
+	DWORD32 Size;//СЂР°Р·РјРµСЂ С‡С‚РµРЅРёСЏ/Р·Р°РїРёСЃРё
+	DWORD64 Result;//СЂРµР·СѓР»СЊС‚Р°С‚(РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РЅРµ РІСЃРµРіРґР°)
 } CommandSpace, *PCommandSpace;
 
 
-PTaklStruct TalkStructp;//получение основной информации
-PCommandSpace CommandSpacep;//общение с приложением
+PTaklStruct TalkStructp;//РїРѕР»СѓС‡РµРЅРёРµ РѕСЃРЅРѕРІРЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
+PCommandSpace CommandSpacep;//РѕР±С‰РµРЅРёРµ СЃ РїСЂРёР»РѕР¶РµРЅРёРµРј
 
 PEPROCESS TargetProcess = NULL, HackProcess = NULL;
 
-//цикл в ядре использую поток user-mode 
+//С†РёРєР» РІ СЏРґСЂРµ РёСЃРїРѕР»СЊР·СѓСЋ РїРѕС‚РѕРє user-mode 
 VOID Loop()
 {
 	INT log = 0;
@@ -347,7 +347,7 @@ VOID Loop()
 	{
 		switch (CommandSpacep->Flag)
 		{
-		case 1://1 - чтение
+		case 1://1 - С‡С‚РµРЅРёРµ
 			if ((TargetProcess == NULL) || (HackProcess == NULL))
 			{
 				//DbgPrint("Can not read! TargetProcess: %p CurrentProcess: %p\n", TargetProcess, HackProcess);
@@ -362,14 +362,14 @@ VOID Loop()
 				CommandSpacep->Result = -1;
 				break;
 			}
-			//CommandSpacep->Addr1 - откуда читаем - адрес в чужом приложении
-			//CommandSpacep->Addr2 - куда читаем
+			//CommandSpacep->Addr1 - РѕС‚РєСѓРґР° С‡РёС‚Р°РµРј - Р°РґСЂРµСЃ РІ С‡СѓР¶РѕРј РїСЂРёР»РѕР¶РµРЅРёРё
+			//CommandSpacep->Addr2 - РєСѓРґР° С‡РёС‚Р°РµРј
 			status = KeReadProcessMemory(TargetProcess, HackProcess, CommandSpacep->Addr1, CommandSpacep->Addr2, CommandSpacep->Size);
 			CommandSpacep->Flag = 0;
 			CommandSpacep->Result = NT_SUCCESS(status);
 			break;
 			 
-		case 2://2 - запись
+		case 2://2 - Р·Р°РїРёСЃСЊ
 			if ((TargetProcess == NULL) || (HackProcess == NULL))
 			{
 				//DbgPrint("Can not read! TargetProcess: %p CurrentProcess: %p\n", TargetProcess, HackProcess);
@@ -384,23 +384,23 @@ VOID Loop()
 				CommandSpacep->Result = -1;
 				break;
 			}
-			//CommandSpacep->Addr1 - откуда пишем - адрес в чужом приложении
-			//CommandSpacep->Addr2 - куда пишем
-			status = KeWriteProcessMemory(HackProcess, TargetProcess, CommandSpacep->Addr2, CommandSpacep->Addr1, CommandSpacep->Size);//Sourceprocess - откуда мы пишем, targetProc - куда пишем
+			//CommandSpacep->Addr1 - РѕС‚РєСѓРґР° РїРёС€РµРј - Р°РґСЂРµСЃ РІ С‡СѓР¶РѕРј РїСЂРёР»РѕР¶РµРЅРёРё
+			//CommandSpacep->Addr2 - РєСѓРґР° РїРёС€РµРј
+			status = KeWriteProcessMemory(HackProcess, TargetProcess, CommandSpacep->Addr2, CommandSpacep->Addr1, CommandSpacep->Size);//Sourceprocess - РѕС‚РєСѓРґР° РјС‹ РїРёС€РµРј, targetProc - РєСѓРґР° РїРёС€РµРј
 			CommandSpacep->Flag = 0;
 			CommandSpacep->Result = NT_SUCCESS(status);
 			break;
 
-		case 3://3 - получения базового адреса модуля
+		case 3://3 - РїРѕР»СѓС‡РµРЅРёСЏ Р±Р°Р·РѕРІРѕРіРѕ Р°РґСЂРµСЃР° РјРѕРґСѓР»СЏ
 			UNICODE_STRING DllName;
 			PCWSTR Nm = L"";//VMProtectDecryptStringW(L"UnityPlayer.dll");
 			PVOID AddressOfModule = NULL;
 			RtlInitUnicodeString(&DllName, Nm);//L"UnityPlayer.dll");
 			//DbgPrint("Flag: 3!\n");
 
-			KeUnstackDetachProcess(&pc);//отключаемся от нашего процесса
+			KeUnstackDetachProcess(&pc);//РѕС‚РєР»СЋС‡Р°РµРјСЃСЏ РѕС‚ РЅР°С€РµРіРѕ РїСЂРѕС†РµСЃСЃР°
 
-			KeStackAttachProcess(TargetProcess, &pc);//подключаемся к игровому процессу
+			KeStackAttachProcess(TargetProcess, &pc);//РїРѕРґРєР»СЋС‡Р°РµРјСЃСЏ Рє РёРіСЂРѕРІРѕРјСѓ РїСЂРѕС†РµСЃСЃСѓ
 				AddressOfModule = GetModuleBaseAddr(TargetProcess, &DllName);
 				 
 				//VMProtectFreeString(Nm); 
@@ -409,23 +409,23 @@ VOID Loop()
 
 			///VMProtectFreeString(Nm);
 
-			KeStackAttachProcess(HackProcess, &pc);//подключаемся к нашему процесса
+			KeStackAttachProcess(HackProcess, &pc);//РїРѕРґРєР»СЋС‡Р°РµРјСЃСЏ Рє РЅР°С€РµРјСѓ РїСЂРѕС†РµСЃСЃР°
 
 			if (AddressOfModule != NULL) RtlCopyMemory(CommandSpacep->Addr1, &AddressOfModule, sizeof(DWORD64));
 
-			Interv = 30;//меняем интервал чтобы быстро читать/писать
+			Interv = 30;//РјРµРЅСЏРµРј РёРЅС‚РµСЂРІР°Р» С‡С‚РѕР±С‹ Р±С‹СЃС‚СЂРѕ С‡РёС‚Р°С‚СЊ/РїРёСЃР°С‚СЊ
 			CommandSpacep->Flag = 0;
 			CommandSpacep->Result = AddressOfModule != NULL;
 			break;
 
-		case 4://4 - выход из цикла в драйвере
+		case 4://4 - РІС‹С…РѕРґ РёР· С†РёРєР»Р° РІ РґСЂР°Р№РІРµСЂРµ
 			//DbgPrint("Send Flag 4! Break cycle!");
 			ExitFromLoop = TRUE;
 			CommandSpacep->Flag = 0;
 			CommandSpacep->Result = 1; 
 			break;
 
-		case 5://5 - передача драйверу PID
+		case 5://5 - РїРµСЂРµРґР°С‡Р° РґСЂР°Р№РІРµСЂСѓ PID
 			if (CommandSpacep->PID > 0) status = PsLookupProcessByProcessId(CommandSpacep->PID, &TargetProcess);
 			//DbgPrint("Send Flag 5! RustProcess: %p\n", TargetProcess);
 			 
@@ -433,11 +433,11 @@ VOID Loop()
 			CommandSpacep->Result = NT_SUCCESS(status);
 			break;
 
-		case 6://получение регионов памяти
+		case 6://РїРѕР»СѓС‡РµРЅРёРµ СЂРµРіРёРѕРЅРѕРІ РїР°РјСЏС‚Рё
 			KeUnstackDetachProcess(&pc);
 
 			KeStackAttachProcess(TargetProcess, &pc);
-				GetMemoryRegionList();//заполняет RegAddr адресами регионов 
+				GetMemoryRegionList();//Р·Р°РїРѕР»РЅСЏРµС‚ RegAddr Р°РґСЂРµСЃР°РјРё СЂРµРіРёРѕРЅРѕРІ 
 			KeUnstackDetachProcess(&pc);
 			
 			KeStackAttachProcess(HackProcess, &pc);
@@ -521,20 +521,20 @@ VOID GetInformationFromFileMap()
 
 			DWORD64* g_CiOptions = (void*)TalkStructp->g_CiOptions;
 
-			//если g_CiOptions содержит 0x8(testsigning) то  temp = true
+			//РµСЃР»Рё g_CiOptions СЃРѕРґРµСЂР¶РёС‚ 0x8(testsigning) С‚Рѕ  temp = true
 			BOOLEAN isUnderTestSign = (*g_CiOptions & 0x8) != 0;//Eh - 14d => 0x8(testsigning) + 0x6(standard mode)
-			if (isUnderTestSign) //если есть тестовый режим - удаляем
+			if (isUnderTestSign) //РµСЃР»Рё РµСЃС‚СЊ С‚РµСЃС‚РѕРІС‹Р№ СЂРµР¶РёРј - СѓРґР°Р»СЏРµРј
 				*g_CiOptions -= 0x8;
 
-			BOOLEAN isUnderNormalMode = (*g_CiOptions & 0x6) != 0;//проверим, есть ли нормальный режим
-			if (isUnderNormalMode == FALSE)//если нормального режима нету - устанавливаем
+			BOOLEAN isUnderNormalMode = (*g_CiOptions & 0x6) != 0;//РїСЂРѕРІРµСЂРёРј, РµСЃС‚СЊ Р»Рё РЅРѕСЂРјР°Р»СЊРЅС‹Р№ СЂРµР¶РёРј
+			if (isUnderNormalMode == FALSE)//РµСЃР»Рё РЅРѕСЂРјР°Р»СЊРЅРѕРіРѕ СЂРµР¶РёРјР° РЅРµС‚Сѓ - СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј
 				*g_CiOptions += 0x6;
 
 			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "g_CiOptions: %x isUnderTestSign: %d isUnderNormalMode: %d\n", *g_CiOptions, isUnderTestSign, isUnderNormalMode);
 			//if (*g_CiOptions == 0xE) *g_CiOptions = 0x6;
 			//DbgPrint("ValueNow: %d\n", *g_CiOptions);
 
-			*m_pAddrMap = 0xCC;//сигнализируем успех
+			*m_pAddrMap = 0xCC;//СЃРёРіРЅР°Р»РёР·РёСЂСѓРµРј СѓСЃРїРµС…
 			
 
 			ZwUnmapViewOfSection(NtCurrentProcess(), m_pAddrMap);
