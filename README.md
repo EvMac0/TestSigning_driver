@@ -11,3 +11,6 @@ About TESTSIGNING mode: https://docs.microsoft.com/en-us/windows-hardware/driver
 6) Driver patch g_CiOptions to off TESTSIGNING mode
 7) In your user-mode app, run bcdedit.exe /set TESTSIGNING OFF
 8) Clear traces in registry
+
+### Warning: Windows implemented Kernel Patch Protection(KPP) aka PatchGuard after Windows 7
+### Patching kernel flags may crash your system(BSOD)!
