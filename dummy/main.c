@@ -1,73 +1,12 @@
 #include <ntifs.h>
-#include "other.h"
 #include <intrin.h>
+#include "kernel_structs.h"
+#include "routines.h"
+#include "talk_structs.h"
 
 PEPROCESS TargetProcHandle;
 DWORD64 UnityPlayerBaseAddr = 0;
 BOOLEAN AllowMemOperation = FALSE;
-
-
-typedef struct _GameData {
-	DWORD32 TargetPID;
-	DWORD32 MyPID;
-} GameData, * PGameData;
-
-
-
-
-typedef struct _NON_PAGED_DEBUG_INFO
-{
-	USHORT      Signature;
-	USHORT      Flags;
-	ULONG       Size;
-	USHORT      Machine;
-	USHORT      Characteristics;
-	ULONG       TimeDateStamp;
-	ULONG       CheckSum;
-	ULONG       SizeOfImage;
-	ULONGLONG   ImageBase;
-} NON_PAGED_DEBUG_INFO, * PNON_PAGED_DEBUG_INFO;
-typedef struct _KLDR_DATA_TABLE_ENTRY
-{
-	LIST_ENTRY InLoadOrderLinks;
-	PVOID ExceptionTable;
-	ULONG ExceptionTableSize;
-	// ULONG padding on IA64
-	PVOID GpValue;
-	PNON_PAGED_DEBUG_INFO NonPagedDebugInfo;
-	PVOID DllBase;
-	PVOID EntryPoint;
-	ULONG SizeOfImage;
-	UNICODE_STRING FullDllName;
-	UNICODE_STRING BaseDllName;
-	ULONG Flags;
-	USHORT LoadCount;
-	USHORT __Unused5;
-	PVOID SectionPointer;
-	ULONG CheckSum;
-	// ULONG padding on IA64
-	PVOID LoadedImports;
-	PVOID PatchInformation;
-} KLDR_DATA_TABLE_ENTRY, * PKLDR_DATA_TABLE_ENTRY;
-
-
-NTSTATUS KeReadProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, PVOID SourceAddress, PVOID TargetAddress, SIZE_T Size)//SourceProcess - откуда читаем TargetProcess - куда читаем
-{
-	SIZE_T Result;
-
-	NTSTATUS status = MmCopyVirtualMemory(SourceProcess, SourceAddress, TargetProcess, TargetAddress, Size, KernelMode, &Result);
-	return status;
-
-}
-
-NTSTATUS KeWriteProcessMemory(PEPROCESS SourceProcess, PEPROCESS TargetProcess, PVOID SourceAddress, PVOID TargetAddress, SIZE_T Size)//SourceProcess - откуда пишем TargetProcess - куда пишем
-{
-	SIZE_T Result;
-
-	NTSTATUS status = MmCopyVirtualMemory(SourceProcess, SourceAddress, TargetProcess, TargetAddress, Size, KernelMode, &Result);
-	return status;
-
-}
 
 
 DWORD64 RegAddr[511];
@@ -96,49 +35,7 @@ VOID GetMemoryRegionList()
 
 	Counter = tmpC;
 }
-
-#define DELAY_ONE_MICROSECOND 	(-10)
-#define DELAY_ONE_MILLISECOND	(DELAY_ONE_MICROSECOND*1000)
-
-VOID KernelSleep(LONG msec)
-{
-	LARGE_INTEGER my_interval;
-	my_interval.QuadPart = DELAY_ONE_MILLISECOND;
-	my_interval.QuadPart *= msec;
-	KeDelayExecutionThread(KernelMode, 0, &my_interval);
-}
-
-
-typedef struct _TalkStruct
-{
-	DWORD64 g_CiOptions;
-	DWORD64 CommunicateBuffer;//
-	DWORD32 Pid;
-} TalkStruct, * PTaklStruct;
-
-
-typedef unsigned char       BYTE;
-typedef unsigned short      WORD;
-typedef unsigned int        UINT;
-
-typedef struct _CommandSpace
-{
-	BYTE Flag;
-	DWORD32 PID;//PID
-	/*
-		0 - ничего не делаем
-		1 - чтение
-		2 - запись
-		3 - получения базового адреса модуля
-		4 - выход из цикла в драйвере
-		5 - передача драйверу PID
-	*/
-	PVOID Addr1; //при чтении: откуда читаем   при записи: куда пишем
-	PVOID Addr2; //при чтении: куда читаем  при записи: откуда пишем
-	DWORD32 Size;//размер чтения/записи
-	DWORD64 Result;//результат(используется не всегда)
-} CommandSpace, * PCommandSpace;
-
+ 
 
 PTaklStruct TalkStructp;//получение основной информации
 PCommandSpace CommandSpacep;//общение с приложением
@@ -153,7 +50,7 @@ VOID Loop()
 	LONG Interv = 2000;
 	CommandSpacep = (PCommandSpace)(void*)TalkStructp->CommunicateBuffer;
 
-	NTSTATUS status = PsLookupProcessByProcessId((HANDLE)TalkStructp->Pid, &HackProcess);
+	NTSTATUS status = PsLookupProcessByProcessId((HANDLE)TalkStructp->PID, &HackProcess);
 	if (NT_SUCCESS(status) == FALSE)
 	{
 		//DbgPrint("Error PsLookupProcessByProcessId: %lx with PID: %d\n", status, TalkStructp->Pid);
