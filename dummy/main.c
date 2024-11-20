@@ -22,14 +22,16 @@ VOID GetMemoryRegionList()
 	for (Addr = MM_LOWEST_USER_ADDRESS; Addr < MM_HIGHEST_USER_ADDRESS; Addr = (void*)((DWORD64)(MemInfo.BaseAddress) + MemInfo.RegionSize))
 	{
 		NTSTATUS status = ZwQueryVirtualMemory(NtCurrentProcess(), Addr, MemoryBasicInformation, &MemInfo, sizeof(MemInfo), &RetVal);
-		if (RetVal = 0) break;
+		if (RetVal == 0) 
+			break;
 
 		if (MemInfo.RegionSize == 65536 && MemInfo.Protect == PAGE_EXECUTE_READWRITE && MemInfo.State == MEM_COMMIT && MemInfo.Type == MEM_PRIVATE)
 		{
 			//DbgPrint("Address: %p\n", MemInfo.BaseAddress);
 			RegAddr[tmpC] = MemInfo.BaseAddress;
 			tmpC++;
-			if (tmpC >= 510) break;
+			if (tmpC >= 510) 
+				break;
 		}
 	}
 
@@ -227,7 +229,6 @@ VOID GetInformationFromFileMap()
 		status = ZwMapViewOfSection(m_SectionHandle, NtCurrentProcess(), &m_pAddrMap, 0L, 0, NULL, &viewSize, ViewUnmap, 0, PAGE_READWRITE);
 		if (NT_SUCCESS(status))
 		{
-
 			memcpy(&TmpStorage, m_pAddrMap, sizeof(TalkStruct));
 
 			TalkStructp = (PTaklStruct)&TmpStorage;
