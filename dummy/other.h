@@ -1,9 +1,5 @@
 #pragma once
-#include <C:\\Program Files\\VMProtect Ultimatezz\\Include\\C\\VMProtectDDK.h>
-#define UnderProt
 
-
-//NTKERNELAPI DWORD64 PsGetProcessSectionBaseAddress(__in PEPROCESS Process);
 NTKERNELAPI PPEB NTAPI PsGetProcessPeb(IN PEPROCESS Process);
 NTKERNELAPI VOID NTAPI RtlInitUnicodeString(_Out_ PUNICODE_STRING DestinationString, _In_opt_z_ __drv_aliasesMem PCWSTR SourceString);
 NTSTATUS NTAPI MmCopyVirtualMemory
@@ -16,25 +12,6 @@ NTSTATUS NTAPI MmCopyVirtualMemory
 	KPROCESSOR_MODE PreviousMode,
 	PSIZE_T ReturnSize
 );
- 
-
-/*
-NTKERNELAPI NTSTATUS IoCreateDriver(IN PUNICODE_STRING DriverName, OPTIONAL IN PDRIVER_INITIALIZE InitializationFunction);
- 
-NTKERNELAPI NTSTATUS  ZwQuerySystemInformation(
-	_In_      INT SystemInformationClass,
-	_Inout_   PVOID                    SystemInformation,
-	_In_      ULONG                    SystemInformationLength,
-	_Out_opt_ PULONG                   ReturnLength
-);
-
-
-
- */
- 
-
-
-
 
 typedef struct _PEB_LDR_DATA
 {
@@ -44,7 +21,7 @@ typedef struct _PEB_LDR_DATA
 	LIST_ENTRY InLoadOrderModuleList;
 	LIST_ENTRY InMemoryOrderModuleList;
 	LIST_ENTRY InInitializationOrderModuleList;
-} PEB_LDR_DATA, *PPEB_LDR_DATA;
+} PEB_LDR_DATA, * PPEB_LDR_DATA;
 
 typedef struct _PEB
 {
@@ -66,24 +43,7 @@ typedef struct _PEB
 	ULONG SystemReserved;
 	ULONG AtlThunkSListPtr32;
 	PVOID ApiSetMap;
-} PEB, *PPEB;
-/*
-typedef struct _LDR_DATA_TABLE_ENTRY
-{
-	LIST_ENTRY InLoadOrderLinks;
-	LIST_ENTRY InMemoryOrderLinks;
-	LIST_ENTRY InInitializationOrderLinks;
-	PVOID DllBase;
-	PVOID EntryPoint;
-	ULONG SizeOfImage;
-	UNICODE_STRING FullDllName;
-	UNICODE_STRING BaseDllName;
-	ULONG Flags;
-	USHORT LoadCount;
-	USHORT TlsIndex;
-	LIST_ENTRY HashLinks;
-	ULONG TimeDateStamp;
-} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;*/
+} PEB, * PPEB;
 
 typedef struct _LDR_DATA_TABLE_ENTRY
 {
@@ -112,41 +72,29 @@ typedef struct _LDR_DATA_TABLE_ENTRY
 		ULONG TimeDateStamp;
 		PVOID LoadedImports;
 	};
-	struct _ACTIVATION_CONTEXT * EntryPointActivationContext;
+	struct _ACTIVATION_CONTEXT* EntryPointActivationContext;
 	PVOID PatchInformation;
 	LIST_ENTRY ForwarderLinks;
 	LIST_ENTRY ServiceTagLinks;
 	LIST_ENTRY StaticLinks;
-} LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
+} LDR_DATA_TABLE_ENTRY, * PLDR_DATA_TABLE_ENTRY;
 
 
-
-UNICODE_STRING  Dll;
-PVOID GetModuleBaseAddr(PEPROCESS pProcess, IN PUNICODE_STRING ModuleName)
+PVOID GetModuleBaseAddr(PEPROCESS pProcess, IN PUNICODE_STRING pModuleName)
 {
 	PPEB peb = PsGetProcessPeb(pProcess);
-	if (!peb)
-	{
-		//DbgPrint("Error PsGetProcessPeb!\n");
+	if (!peb || !peb->Ldr)
 		return NULL;
-	}
-	 
-
-	if (!peb->Ldr)
-	{
-		//DbgPrint("PEB not inicialized!\n");
-		return NULL;
-	}
 
 	//only for x64 applications!
 	for (PLIST_ENTRY pListEntry = peb->Ldr->InLoadOrderModuleList.Flink; pListEntry != &peb->Ldr->InLoadOrderModuleList; pListEntry = pListEntry->Flink)
 	{
 		PLDR_DATA_TABLE_ENTRY pEntry = CONTAINING_RECORD(pListEntry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
-		if (RtlCompareUnicodeString(&pEntry->BaseDllName, ModuleName, TRUE) == 0)
+		if (RtlCompareUnicodeString(&pEntry->BaseDllName, pModuleName, TRUE) == 0)
 			return pEntry->DllBase;
 	}
 	return NULL;
 }
 
- 
+
 
