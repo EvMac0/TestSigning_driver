@@ -24,7 +24,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="other.h">
+    <ClInclude Include="kernel_structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="routines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="talk_structs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
